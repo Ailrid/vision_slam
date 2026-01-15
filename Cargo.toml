@@ -18,9 +18,16 @@ bevy_ecs = "0.17.3"
 bevy_time = "0.17.3"
 bevy_log = "0.17.3"
 rand = "0.9.2"
+thiserror = "2.0.17"
+anyhow = "1.0.100"
+rayon = "1.11.0"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
+
+
 
 [dependencies]
 tracker = { path = "crates/tracker" }
 imu = { path = "crates/imu" }
 feature = { path = "crates/feature" }
-
+map_matching = { path = "crates/map_matching" }
