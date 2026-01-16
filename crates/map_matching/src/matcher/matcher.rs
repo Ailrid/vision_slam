@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 15:03:13
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 19:32:12
+ * @LastEditTime: 2026-01-16 19:59:24
  * @FilePath: /map_matching/src/matcher/matcher.rs
  * @Description: 地图匹配模块，负责查询地图数据库并返回匹配结果还有抠图
  *
@@ -11,7 +11,7 @@
 use crate::{
     matcher::{
         backend::{onnx_backend::OnnxBackend, vino_backend::OpenVinoBackend},
-        errors::MatcherInitError,
+        errors::MatcherError,
         traits::MatcherBackend,
         types::{CropRequest, MatcherCfg, SearchItem, SearchRequest, SearchResponse},
         vector_client::VectorClient,
@@ -28,8 +28,7 @@ pub struct Matcher {
 }
 
 impl Matcher {
-    #[tracing::instrument(level = "info", fields(cfg = %cfg.backend_type))]
-    pub fn new(cfg: MatcherCfg) -> Result<Self, MatcherInitError> {
+    pub fn new(cfg: MatcherCfg) -> Result<Self, MatcherError> {
         info!("▶Creating Matcher");
         let backend: Box<dyn MatcherBackend> = match cfg.backend_type.as_str() {
             "onnx" => {
@@ -46,7 +45,7 @@ impl Matcher {
                 Box::new(vino_backend)
             }
             _ => {
-                return Err(MatcherInitError::ModelTypeError(
+                return Err(MatcherError::ModelTypeError(
                     cfg.backend_type.to_string(),
                 ));
             }
@@ -60,7 +59,7 @@ impl Matcher {
         &mut self,
         drone_img: &Mat,
         frame_priori: FramePriori,
-    ) -> anyhow::Result<SearchResponse> {
+    ) -> Result<SearchResponse, MatcherError> {
         // 先拿图像处理得到特征向量
         let feature_vec = self.backend.forword(drone_img)?;
         //到数据库里查询
@@ -74,7 +73,11 @@ impl Matcher {
         })?;
         Ok(search_res)
     }
-    pub fn crop_pos(&mut self, patch_size: usize, payload: &SearchItem) -> anyhow::Result<Mat> {
+    pub fn crop_pos(
+        &mut self,
+        patch_size: usize,
+        payload: &SearchItem,
+    ) -> Result<Mat, MatcherError> {
         let crop_res = self.client.crop(CropRequest {
             patch_size,
             payload: payload.clone(),

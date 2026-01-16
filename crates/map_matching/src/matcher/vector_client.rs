@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by ShirahaYuki, All Rights Reserved.
  */
-use crate::matcher::errors::{CropError, SearchError};
+use crate::matcher::errors::ClientError;
 use crate::matcher::types::{CropRequest, SearchRequest, SearchResponse};
 use opencv::{core, imgcodecs};
 use reqwest::blocking::Client;
@@ -34,7 +34,7 @@ impl VectorClient {
     /// - `Result<SearchResponse, SearchError>` - 返回查询.
     ///
 
-    pub fn search(&self, request: SearchRequest) -> Result<SearchResponse, SearchError> {
+    pub fn search(&self, request: SearchRequest) -> Result<SearchResponse, ClientError> {
         let url = format!("{}/search", self.addr);
         let response = self
             .client
@@ -54,7 +54,7 @@ impl VectorClient {
     ///
     /// - `Result<core::Mat, CropError>` - 转换完成的opencv Mat结构体
 
-    pub fn crop(&self, request: CropRequest) -> Result<core::Mat, CropError> {
+    pub fn crop(&self, request: CropRequest) -> Result<core::Mat, ClientError> {
         let url = format!("{}/crop", self.addr);
         let response = self.client.post(url).json(&request).send()?.bytes()?;
         let buf = core::Vector::<u8>::from_iter(response.as_ref().iter().cloned());

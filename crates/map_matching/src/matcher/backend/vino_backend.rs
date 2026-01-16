@@ -1,6 +1,6 @@
-use crate::matcher::errors::MatcherError;
+use crate::errors::BackendError;
+use crate::fill_images_to_buffer;
 use crate::matcher::traits::MatcherBackend;
-use crate::{extractor::errors::VinoError, fill_images_to_buffer};
 use opencv::prelude::*;
 use openvino::{Core, DeviceType, ElementType, Shape, Tensor};
 
@@ -11,7 +11,7 @@ pub struct OpenVinoBackend {
 
 impl MatcherBackend for OpenVinoBackend {
     #[tracing::instrument(level = "debug", skip(self, drone_img))]
-    fn forword(&mut self, drone_img: &Mat) -> Result<Vec<f32>, MatcherError> {
+    fn forword(&mut self, drone_img: &Mat) -> Result<Vec<f32>, BackendError> {
         // 准备输入数据
         let mut input_buffer: Vec<f32> = Vec::new();
         fill_images_to_buffer!(drone_img, input_buffer);
@@ -43,8 +43,11 @@ impl MatcherBackend for OpenVinoBackend {
 }
 
 impl OpenVinoBackend {
-    #[tracing::instrument(level = "info", fields(xml_path = %xml_path,bin_path=%bin_path))]
-    pub fn new(xml_path: &str, bin_path: &str, device: DeviceType<'_>) -> Result<Self, VinoError> {
+    pub fn new(
+        xml_path: &str,
+        bin_path: &str,
+        device: DeviceType<'_>,
+    ) -> Result<Self, BackendError> {
         // 初始化 OpenVINO 核心
         let mut core = Core::new()?;
         // 读取模型
@@ -83,8 +86,7 @@ mod tests {
         }
 
         // 2. 初始化后端
-        let mut backend = OpenVinoBackend::new(model_path, "", openvino::DeviceType::CPU)
-            .map_err(|e| anyhow::anyhow!("vino 加载失败: {:?}", e))?;
+        let mut backend = OpenVinoBackend::new(model_path, "", openvino::DeviceType::CPU)?;
 
         // 3. 加载原始图像 (OpenCV 默认 BGR)
         let img_raw = imgcodecs::imread(img_path, imgcodecs::IMREAD_COLOR)?;
@@ -103,9 +105,7 @@ mod tests {
 
         // 4. 执行推理 (内部会进行 256x256 Resize 和 ImageNet 归一化宏调用)
         let start_time = std::time::Instant::now();
-        let vector = backend
-            .forword(&resized)
-            .map_err(|e| anyhow::anyhow!("推理失败: {:?}", e))?;
+        let vector = backend.forword(&resized)?;
         let duration = start_time.elapsed();
 
         // 5. 打印统计信息 (用于和 Python 对齐)

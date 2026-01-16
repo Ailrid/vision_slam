@@ -1,45 +1,20 @@
-use crate::extractor::errors::ExtractorInitError;
 use thiserror::Error;
 
+use crate::errors::BackendError;
 #[derive(Error, Debug)]
-pub enum CropError {
-    #[error("服务器错误: {0}")]
+pub enum ClientError {
+    #[error("Clent error: {0}")]
     HttpError(#[from] reqwest::Error),
-    #[error("转换Mat错误: {0}")]
+    #[error("Covnert btyes to Mat error: {0}")]
     ConvertError(#[from] opencv::Error),
 }
 
-pub type SearchError = reqwest::Error;
-
 #[derive(Error, Debug)]
 pub enum MatcherError {
-    #[error("后端计算错误: {0}")]
-    BackendError(String),
-    #[error("其他错误：{0}")]
-    OthorError(String),
+    #[error("Client error: {0}")]
+    ClientError(#[from] ClientError),
+    #[error("Model backend forward error:{0}")]
+    BackendError(#[from] BackendError),
+    #[error("InvalidModel:{0}")]
+    ModelTypeError(String),
 }
-
-impl From<anyhow::Error> for MatcherError {
-    fn from(err: anyhow::Error) -> Self {
-        MatcherError::OthorError(err.to_string())
-    }
-}
-impl From<opencv::Error> for MatcherError {
-    fn from(err: opencv::Error) -> Self {
-        MatcherError::OthorError(err.to_string())
-    }
-}
-
-impl From<ort::Error> for MatcherError {
-    fn from(err: ort::Error) -> Self {
-        MatcherError::BackendError(err.to_string())
-    }
-}
-
-impl From<openvino::InferenceError> for MatcherError {
-    fn from(err: openvino::InferenceError) -> Self {
-        MatcherError::BackendError(err.to_string())
-    }
-}
-
-pub type MatcherInitError = ExtractorInitError;

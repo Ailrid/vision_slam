@@ -9,7 +9,6 @@ nalgebra.workspace=true
 serde.workspace = true
 thiserror.workspace = true
 opencv.workspace = true
-anyhow.workspace = true
 rayon.workspace = true
 rand.workspace = true
 tracing.workspace = true

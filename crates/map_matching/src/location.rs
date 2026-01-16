@@ -2,20 +2,21 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:21:00
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 19:11:24
+ * @LastEditTime: 2026-01-16 20:32:40
  * @FilePath: /map_matching/src/location.rs
  * @Description:地图定位模块，负责给出地图定位结果
  *
  * Copyright (c) 2026 by ShirahaYuki, All Rights Reserved.
  */
 use crate::{
+    errors::LocationError,
     extractor::{extractor::Extractor, types::ExtractorCfg},
     matcher::{matcher::Matcher, types::MatcherCfg},
     types::{FramePriori, PredictPoint},
 };
 use geodesy::prelude::*;
 use opencv::core::Mat;
-use std::{sync::Arc, time::Instant};
+use std::time::Instant;
 use tracing::info;
 pub struct Location {
     matcher: Matcher,
@@ -24,8 +25,10 @@ pub struct Location {
 }
 
 impl Location {
-    #[tracing::instrument(level = "info")]
-    pub fn new(macther_cfg: MatcherCfg, extractor_cfg: ExtractorCfg) -> anyhow::Result<Self> {
+    pub fn new(
+        macther_cfg: MatcherCfg,
+        extractor_cfg: ExtractorCfg,
+    ) -> Result<Self, LocationError> {
         info!("▶Creating Matcher and Extractor");
         let matcher = Matcher::new(macther_cfg)?;
         let extractor = Extractor::new(extractor_cfg)?;
@@ -43,7 +46,7 @@ impl Location {
         time: Instant,
         frame_id: usize,
         frame_priori: FramePriori,
-    ) -> anyhow::Result<Vec<PredictPoint>> {
+    ) -> Result<Vec<PredictPoint>, LocationError> {
         //首先，用匹配模型生成特征向量并查询数据库
         let feature_vector = self.matcher.query_img(drone_img, frame_priori)?;
 
@@ -53,7 +56,6 @@ impl Location {
             let sat_img = self.matcher.crop_pos(256, item)?;
             //计算每个图像的单应性矩阵
             let result = self.extractor.homography_matrix(drone_img, &sat_img);
-
             match result {
                 Ok((_h_mat, center_point)) => {
                     // 能得到单应性矩阵结果的话，就保存这张图像的数据
@@ -67,7 +69,6 @@ impl Location {
                     let mut data = [Coor3D::raw(utm_x as f64, utm_y as f64, 0.0)];
                     // 执行转换到空间直角坐标系
                     self.minimal.apply(op, Fwd, &mut data)?;
-                    Arc::new(op);
                     let ecef_center = data[0].0;
                     // 保存这帧的位置
                     frame_pos.push(PredictPoint {
@@ -78,7 +79,6 @@ impl Location {
                         frame_id: frame_id,
                     });
                 }
-
                 Err(e) => {
                     // 计算单应性矩阵错误表明不可能匹配，直接丢掉
                     tracing::warn!("Homography matrix error:{:?}", e);

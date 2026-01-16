@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:12:59
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 18:02:42
+ * @LastEditTime: 2026-01-16 20:04:48
  * @FilePath: /map_matching/src/estimator.rs
  * @Description:位置评估算法，负责初始化定位和评估位置可靠性
  *
@@ -13,14 +13,12 @@ use crate::types::PredictPoint;
 pub struct Estimator {
     //每次地图匹配找到的结果
     buffer_points: Vec<Vec<PredictPoint>>,
-    tracking_points: Vec<PredictPoint>,
 }
 
 impl Estimator {
     pub fn new() -> Self {
         Self {
             buffer_points: Vec::new(),
-            tracking_points: Vec::new(),
         }
     }
     /// 更新点坐标集合，这里面的点都是

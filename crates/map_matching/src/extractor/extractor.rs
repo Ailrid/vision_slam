@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:40:49
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 19:27:12
+ * @LastEditTime: 2026-01-16 20:06:45
  * @FilePath: /map_matching/src/extractor/extractor.rs
  * @Description:特征提取和计算单应性模块
  *
@@ -10,7 +10,7 @@
  */
 use crate::extractor::backend::onnx_backend::OnnxBackend;
 use crate::extractor::backend::vino_backend::OpenVinoBackend;
-use crate::extractor::errors::{ExtractorInitError, HomographyMatrixError};
+use crate::extractor::errors::ExtractorError;
 use crate::extractor::traits::ExtractorBackend;
 use crate::extractor::types::*;
 use opencv::calib3d;
@@ -25,8 +25,7 @@ pub struct Extractor {
 }
 
 impl Extractor {
-    #[tracing::instrument(level = "info", fields(cfg = %cfg.backend_type))]
-    pub fn new(cfg: ExtractorCfg) -> Result<Self, ExtractorInitError> {
+    pub fn new(cfg: ExtractorCfg) -> Result<Self, ExtractorError> {
         info!("▶Creating MapExtractor");
         let backend: Box<dyn ExtractorBackend<Output = FeatureData>> =
             match cfg.backend_type.as_str() {
@@ -44,9 +43,7 @@ impl Extractor {
                     Box::new(vino_backend)
                 }
                 _ => {
-                    return Err(ExtractorInitError::ModelTypeError(
-                        cfg.backend_type.to_string(),
-                    ));
+                    return Err(ExtractorError::ModelTypeError(cfg.backend_type.to_string()));
                 }
             };
         info!("✔Creating MapExtractor has been completed");
@@ -62,7 +59,7 @@ impl Extractor {
         &mut self,
         drone_img: &Mat,
         sat_img: &Mat,
-    ) -> Result<(Mat, Point2f), HomographyMatrixError> {
+    ) -> Result<(Mat, Point2f), ExtractorError> {
         let model_result: FeatureData = self.backend.forward(drone_img, sat_img)?;
         //无人机和地图图像的点对
         let mut src_pts = Vector::<Point2f>::new();
@@ -88,7 +85,7 @@ impl Extractor {
         }
         // 数量初审
         if src_pts.len() < self.min_inliers {
-            return Err(HomographyMatrixError::TooFewMatches(src_pts.len()));
+            return Err(ExtractorError::TooFewMatches(src_pts.len()));
         }
 
         // RANSAC 计算
@@ -96,25 +93,25 @@ impl Extractor {
         let h = calib3d::find_homography(&src_pts, &dst_pts, &mut mask, calib3d::USAC_MAGSAC, 5.0)?;
 
         if h.empty() {
-            return Err(HomographyMatrixError::InvalidMatch);
+            return Err(ExtractorError::InvalidMatch);
         }
 
         // 内点数检查
         let inlier_count = count_non_zero(&mask)? as usize;
         if inlier_count < self.min_inliers {
-            return Err(HomographyMatrixError::InvalidMatch);
+            return Err(ExtractorError::InvalidMatch);
         }
 
         // 检查行列式
         if self.check_det {
             // 将 Mat 转换为可以用 determinant 计算的状态
-            let det = opencv::core::determinant(&h)
-                .map_err(|_e| HomographyMatrixError::DegenerateMatrix)?;
+            let det =
+                opencv::core::determinant(&h).map_err(|_e| ExtractorError::DegenerateMatrix)?;
 
             // 简化版逻辑：在 Rust 中可以直接调用 h.determinant() 如果类型匹配
             // 如果行列式太小或为负，说明投影关系是病态的
             if det.abs() < 1e-7 {
-                return Err(HomographyMatrixError::DegenerateMatrix);
+                return Err(ExtractorError::DegenerateMatrix);
             }
         }
         // 无人机中心点在模型坐标系中的位置 (IMAGE_SIZE / 2)
@@ -131,7 +128,7 @@ impl Extractor {
         // 提取变换后的点
         let transformed_center = dst_center_vec
             .get(0)
-            .map_err(|_| HomographyMatrixError::InvalidMatch)?;
+            .map_err(|_| ExtractorError::InvalidMatch)?;
 
         Ok((h, transformed_center))
     }
@@ -169,7 +166,7 @@ mod tests {
         // 3. 计算单应性矩阵 H
         // H 将 drone_img 中的点映射到 sat_img 的坐标系中
         match extractor.homography_matrix(&drone_img, &sat_img) {
-            Ok((h, center)) => {
+            Ok((h, _center)) => {
                 println!("单应性矩阵提取成功: {:?}", h);
 
                 // 4. 执行反投影 (Warp Perspective)

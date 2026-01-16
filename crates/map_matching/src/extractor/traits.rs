@@ -1,4 +1,4 @@
-use super::errors::ExtractError;
+use crate::errors::BackendError;
 use opencv::core::Mat;
 
 pub trait ExtractorBackend {
@@ -14,7 +14,7 @@ pub trait ExtractorBackend {
     ///
     /// - `Output` - 后端网络提取的特征点结果.一个FeaturePoints类型
     ///
-    fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, ExtractError>;
+    fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, BackendError>;
 }
 
 pub trait FromBackend {
