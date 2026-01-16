@@ -1,4 +1,4 @@
-use crate::extractor::errors::ForwardError;
+use crate::extractor::errors::ExtractError;
 use crate::extractor::traits::{ExtractorBackend, FromBackend};
 use crate::extractor::types::*;
 use crate::fill_images_to_buffer;
@@ -8,8 +8,7 @@ use ort::{
     value::Tensor,
 };
 
-const MODEL_POINTS: usize = 256;
-const IMAGE_SIZE: usize = 256;
+
 pub struct OnnxBackend {
     session: Session,
     input_buffer: Vec<f32>,
@@ -17,7 +16,7 @@ pub struct OnnxBackend {
 
 impl ExtractorBackend for OnnxBackend {
     type Output = FeatureData;
-    fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, ForwardError> {
+    fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, ExtractError> {
         //要转换一下格式
         // 准备输入数据
         fill_images_to_buffer!(drone_img, sat_img, self.input_buffer, IMAGE_SIZE);

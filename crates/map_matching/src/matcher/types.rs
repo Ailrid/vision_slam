@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-14 09:44:27
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-15 15:50:56
+ * @LastEditTime: 2026-01-16 16:06:40
  * @FilePath: /map_matching/src/matcher/types.rs
  * @Description:设定和服务器发送和响应的类型
  *
@@ -78,4 +78,6 @@ pub struct MatcherCfg {
     // 向量查询服务器地址
     pub client_addr: String,
 }
+
+
 

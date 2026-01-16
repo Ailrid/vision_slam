@@ -1,6 +1,6 @@
-use crate::fill_images_to_buffer;
 use crate::matcher::errors::MatcherError;
 use crate::matcher::traits::MatcherBackend;
+use crate::{extractor::errors::VinoError, fill_images_to_buffer};
 use opencv::prelude::*;
 use openvino::{Core, DeviceType, ElementType, Shape, Tensor};
 
@@ -44,11 +44,7 @@ impl MatcherBackend for OpenVinoBackend {
 
 impl OpenVinoBackend {
     #[tracing::instrument(level = "info", fields(xml_path = %xml_path,bin_path=%bin_path))]
-    pub fn new(
-        xml_path: &str,
-        bin_path: &str,
-        device: DeviceType<'_>,
-    ) -> Result<Self, anyhow::Error> {
+    pub fn new(xml_path: &str, bin_path: &str, device: DeviceType<'_>) -> Result<Self, VinoError> {
         // 初始化 OpenVINO 核心
         let mut core = Core::new()?;
         // 读取模型

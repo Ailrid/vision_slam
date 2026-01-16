@@ -37,3 +37,6 @@ pub struct ExtractorCfg {
     // 是否检查行列式
     pub check_det: bool,
 }
+
+pub const MODEL_POINTS: usize = 256;
+pub const IMAGE_SIZE: usize = 256;

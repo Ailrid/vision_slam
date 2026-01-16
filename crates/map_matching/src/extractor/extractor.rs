@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:40:49
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-15 15:56:06
+ * @LastEditTime: 2026-01-16 19:27:12
  * @FilePath: /map_matching/src/extractor/extractor.rs
  * @Description:特征提取和计算单应性模块
  *
@@ -10,11 +10,11 @@
  */
 use crate::extractor::backend::onnx_backend::OnnxBackend;
 use crate::extractor::backend::vino_backend::OpenVinoBackend;
-use crate::extractor::errors::HomographyMatrixError;
+use crate::extractor::errors::{ExtractorInitError, HomographyMatrixError};
 use crate::extractor::traits::ExtractorBackend;
-use crate::extractor::types::{ExtractorCfg, FeatureData};
+use crate::extractor::types::*;
 use opencv::calib3d;
-use opencv::core::{Mat, MatTraitConst, Point2f, Vector, count_non_zero};
+use opencv::core::{Mat, MatTraitConst, Point2f, Vector, count_non_zero, perspective_transform};
 
 use tracing::info;
 pub struct Extractor {
@@ -26,7 +26,7 @@ pub struct Extractor {
 
 impl Extractor {
     #[tracing::instrument(level = "info", fields(cfg = %cfg.backend_type))]
-    pub fn new(cfg: ExtractorCfg) -> anyhow::Result<Self> {
+    pub fn new(cfg: ExtractorCfg) -> Result<Self, ExtractorInitError> {
         info!("▶Creating MapExtractor");
         let backend: Box<dyn ExtractorBackend<Output = FeatureData>> =
             match cfg.backend_type.as_str() {
@@ -44,9 +44,8 @@ impl Extractor {
                     Box::new(vino_backend)
                 }
                 _ => {
-                    return Err(anyhow::anyhow!(
-                        "Only support onnx and vino,reviced: {:?}",
-                        cfg.backend_type
+                    return Err(ExtractorInitError::ModelTypeError(
+                        cfg.backend_type.to_string(),
                     ));
                 }
             };
@@ -63,7 +62,7 @@ impl Extractor {
         &mut self,
         drone_img: &Mat,
         sat_img: &Mat,
-    ) -> Result<Mat, HomographyMatrixError> {
+    ) -> Result<(Mat, Point2f), HomographyMatrixError> {
         let model_result: FeatureData = self.backend.forward(drone_img, sat_img)?;
         //无人机和地图图像的点对
         let mut src_pts = Vector::<Point2f>::new();
@@ -118,8 +117,23 @@ impl Extractor {
                 return Err(HomographyMatrixError::DegenerateMatrix);
             }
         }
+        // 无人机中心点在模型坐标系中的位置 (IMAGE_SIZE / 2)
+        let center_val = (IMAGE_SIZE as f32) / 2.0;
+        let drone_center = Point2f::new(center_val, center_val);
 
-        Ok(h)
+        // perspective_transform 需要输入数组/Vector
+        let src_center_vec = Vector::<Point2f>::from_iter(vec![drone_center]);
+        let mut dst_center_vec = Vector::<Point2f>::new();
+
+        // 执行透视变换映射坐标
+        perspective_transform(&src_center_vec, &mut dst_center_vec, &h)?;
+
+        // 提取变换后的点
+        let transformed_center = dst_center_vec
+            .get(0)
+            .map_err(|_| HomographyMatrixError::InvalidMatch)?;
+
+        Ok((h, transformed_center))
     }
 }
 
@@ -155,7 +169,7 @@ mod tests {
         // 3. 计算单应性矩阵 H
         // H 将 drone_img 中的点映射到 sat_img 的坐标系中
         match extractor.homography_matrix(&drone_img, &sat_img) {
-            Ok(h) => {
+            Ok((h, center)) => {
                 println!("单应性矩阵提取成功: {:?}", h);
 
                 // 4. 执行反投影 (Warp Perspective)

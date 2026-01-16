@@ -1,12 +1,9 @@
-use crate::extractor::errors::ForwardError;
+use crate::extractor::errors::{ExtractError, VinoError};
 use crate::extractor::traits::{ExtractorBackend, FromBackend};
 use crate::extractor::types::*;
 use crate::fill_images_to_buffer;
 use opencv::prelude::*;
 use openvino::{Core, DeviceType, ElementType, Shape, Tensor};
-
-const MODEL_POINTS: usize = 256;
-const IMAGE_SIZE: usize = 256;
 
 pub struct OpenVinoBackend {
     _core: Core,
@@ -17,7 +14,7 @@ pub struct OpenVinoBackend {
 impl ExtractorBackend for OpenVinoBackend {
     type Output = FeatureData;
 
-    fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, ForwardError> {
+    fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, ExtractError> {
         // 准备输入数据
         fill_images_to_buffer!(drone_img, sat_img, self.input_buffer, IMAGE_SIZE);
 
@@ -71,11 +68,7 @@ impl ExtractorBackend for OpenVinoBackend {
 }
 
 impl OpenVinoBackend {
-    pub fn new(
-        xml_path: &str,
-        bin_path: &str,
-        device: DeviceType<'_>,
-    ) -> Result<Self, anyhow::Error> {
+    pub fn new(xml_path: &str, bin_path: &str, device: DeviceType<'_>) -> Result<Self, VinoError> {
         // 初始化 OpenVINO 核心
         let mut core = Core::new()?;
         // 读取模型

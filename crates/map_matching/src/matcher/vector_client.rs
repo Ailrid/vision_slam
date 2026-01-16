@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-14 10:10:14
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-15 15:51:54
+ * @LastEditTime: 2026-01-16 17:05:01
  * @FilePath: /map_matching/src/matcher/vector_client.rs
  * @Description:负责与图像/向量数据库进行交互，发送查询请求和接收响应。
  *
@@ -24,17 +24,16 @@ impl VectorClient {
         Self { client, addr }
     }
     /// Describe this function.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// - `request` (`SearchRequest`) - 请求数据结构体.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// - `Result<SearchResponse, SearchError>` - 返回查询.
-    /// 
+    ///
 
-    
     pub fn search(&self, request: SearchRequest) -> Result<SearchResponse, SearchError> {
         let url = format!("{}/search", self.addr);
         let response = self
@@ -46,13 +45,13 @@ impl VectorClient {
         Ok(response)
     }
     /// Describe this function.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// - `request` (`CropRequest`) -  裁剪请求结构体
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// - `Result<core::Mat, CropError>` - 转换完成的opencv Mat结构体
 
     pub fn crop(&self, request: CropRequest) -> Result<core::Mat, CropError> {
@@ -98,17 +97,16 @@ mod tests {
 
         // 执行请求并获取 Mat
         let result = client.crop(request);
-        
+
         match result {
             Ok(mat) => {
-                
                 // 定义保存路径
                 let save_path = "crop_result.png";
-                
+
                 // 使用 opencv 库保存图像
                 let params = core::Vector::<i32>::new();
                 let write_res = imgcodecs::imwrite(save_path, &mat, &params);
-                
+
                 match write_res {
                     Ok(success) => {
                         if success {

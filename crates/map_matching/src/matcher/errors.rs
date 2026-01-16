@@ -1,4 +1,6 @@
+use crate::extractor::errors::ExtractorInitError;
 use thiserror::Error;
+
 #[derive(Error, Debug)]
 pub enum CropError {
     #[error("服务器错误: {0}")]
@@ -39,3 +41,5 @@ impl From<openvino::InferenceError> for MatcherError {
         MatcherError::BackendError(err.to_string())
     }
 }
+
+pub type MatcherInitError = ExtractorInitError;

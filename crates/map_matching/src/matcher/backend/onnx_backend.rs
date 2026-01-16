@@ -39,7 +39,7 @@ impl OnnxBackend {
         level: GraphOptimizationLevel,
         intra_threads: usize,
         onnx_path: &str,
-    ) -> Result<Self, anyhow::Error> {
+    ) -> Result<Self, ort::Error> {
         let session = Session::builder()?
             .with_optimization_level(level)?
             .with_intra_threads(intra_threads)?
