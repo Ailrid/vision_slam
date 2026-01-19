@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:40:49
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 20:06:45
+ * @LastEditTime: 2026-01-19 11:57:42
  * @FilePath: /map_matching/src/extractor/extractor.rs
  * @Description:特征提取和计算单应性模块
  *
@@ -25,6 +25,7 @@ pub struct Extractor {
 }
 
 impl Extractor {
+    #[tracing::instrument(level = "info")]
     pub fn new(cfg: ExtractorCfg) -> Result<Self, ExtractorError> {
         info!("▶Creating MapExtractor");
         let backend: Box<dyn ExtractorBackend<Output = FeatureData>> =
@@ -55,11 +56,16 @@ impl Extractor {
         })
     }
 
+    #[tracing::instrument(
+        level = "info",
+        skip(self, drone_img, sat_img),
+        fields(homography_matrix = "homography_matrix")
+    )]
     pub fn homography_matrix(
         &mut self,
         drone_img: &Mat,
         sat_img: &Mat,
-    ) -> Result<(Mat, Point2f), ExtractorError> {
+    ) -> Result<(Mat, usize, Point2f), ExtractorError> {
         let model_result: FeatureData = self.backend.forward(drone_img, sat_img)?;
         //无人机和地图图像的点对
         let mut src_pts = Vector::<Point2f>::new();
@@ -130,7 +136,7 @@ impl Extractor {
             .get(0)
             .map_err(|_| ExtractorError::InvalidMatch)?;
 
-        Ok((h, transformed_center))
+        Ok((h, inlier_count, transformed_center))
     }
 }
 
@@ -166,7 +172,7 @@ mod tests {
         // 3. 计算单应性矩阵 H
         // H 将 drone_img 中的点映射到 sat_img 的坐标系中
         match extractor.homography_matrix(&drone_img, &sat_img) {
-            Ok((h, _center)) => {
+            Ok((h, _inlier_count, _center)) => {
                 println!("单应性矩阵提取成功: {:?}", h);
 
                 // 4. 执行反投影 (Warp Perspective)

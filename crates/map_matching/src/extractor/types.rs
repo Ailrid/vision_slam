@@ -38,5 +38,19 @@ pub struct ExtractorCfg {
     pub check_det: bool,
 }
 
+impl Default for ExtractorCfg {
+    fn default() -> Self {
+        Self {
+            backend_type: "onnx".to_string(),
+            model_path: "".to_string(),
+            threads: 1,
+            device: "CPU".to_string(),
+            min_inliers: 10,
+            score_threshold: 0.5,
+            check_det: true,
+        }
+    }
+}
+
 pub const MODEL_POINTS: usize = 256;
 pub const IMAGE_SIZE: usize = 256;

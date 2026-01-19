@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 15:03:13
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 19:59:24
+ * @LastEditTime: 2026-01-19 11:58:51
  * @FilePath: /map_matching/src/matcher/matcher.rs
  * @Description: 地图匹配模块，负责查询地图数据库并返回匹配结果还有抠图
  *
@@ -13,7 +13,7 @@ use crate::{
         backend::{onnx_backend::OnnxBackend, vino_backend::OpenVinoBackend},
         errors::MatcherError,
         traits::MatcherBackend,
-        types::{CropRequest, MatcherCfg, SearchItem, SearchRequest, SearchResponse},
+        types::{CropRequest, MatcherCfg, SearchRequest, SearchResponse},
         vector_client::VectorClient,
     },
     types::FramePriori,
@@ -28,6 +28,7 @@ pub struct Matcher {
 }
 
 impl Matcher {
+    #[tracing::instrument(level = "info")]
     pub fn new(cfg: MatcherCfg) -> Result<Self, MatcherError> {
         info!("▶Creating Matcher");
         let backend: Box<dyn MatcherBackend> = match cfg.backend_type.as_str() {
@@ -45,9 +46,7 @@ impl Matcher {
                 Box::new(vino_backend)
             }
             _ => {
-                return Err(MatcherError::ModelTypeError(
-                    cfg.backend_type.to_string(),
-                ));
+                return Err(MatcherError::ModelTypeError(cfg.backend_type.to_string()));
             }
         };
         let client = VectorClient::new(cfg.client_addr);
@@ -75,12 +74,16 @@ impl Matcher {
     }
     pub fn crop_pos(
         &mut self,
+        pixel_x: usize,
+        pixel_y: usize,
         patch_size: usize,
-        payload: &SearchItem,
+        src: String,
     ) -> Result<Mat, MatcherError> {
         let crop_res = self.client.crop(CropRequest {
+            pixel_x,
+            pixel_y,
             patch_size,
-            payload: payload.clone(),
+            src,
         })?;
         Ok(crop_res)
     }

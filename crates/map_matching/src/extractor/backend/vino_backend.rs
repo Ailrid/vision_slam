@@ -13,7 +13,11 @@ pub struct OpenVinoBackend {
 
 impl ExtractorBackend for OpenVinoBackend {
     type Output = FeatureData;
-
+    #[tracing::instrument(
+        level = "info",
+        skip(self, drone_img, sat_img),
+        fields(backend = "vino")
+    )]
     fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, BackendError> {
         // 准备输入数据
         fill_images_to_buffer!(drone_img, sat_img, self.input_buffer, IMAGE_SIZE);
@@ -68,6 +72,7 @@ impl ExtractorBackend for OpenVinoBackend {
 }
 
 impl OpenVinoBackend {
+    #[tracing::instrument(level = "info")]
     pub fn new(
         xml_path: &str,
         bin_path: &str,

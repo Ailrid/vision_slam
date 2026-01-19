@@ -12,7 +12,7 @@ pub struct OnnxBackend {
 }
 
 impl MatcherBackend for OnnxBackend {
-    #[tracing::instrument(level = "debug", skip(self, drone_img))]
+    #[tracing::instrument(level = "info", skip(self, drone_img), fields(backend = "onnx"), err)]
     fn forword(&mut self, drone_img: &Mat) -> Result<Vec<f32>, BackendError> {
         //要转换一下格式
         // 准备输入数据
@@ -34,6 +34,7 @@ impl MatcherBackend for OnnxBackend {
 }
 
 impl OnnxBackend {
+    #[tracing::instrument(level = "info")]
     pub fn new(
         level: GraphOptimizationLevel,
         intra_threads: usize,

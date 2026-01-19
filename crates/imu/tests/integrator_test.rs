@@ -95,6 +95,8 @@ fn imu_integrator() {
 
     // 预测公式: Pj = Pi + Vi*Δt + 0.5*g*Δt^2 + Ri * ΔPij
     let p_predict = p_i + v_i * dt + 0.5 * g_w * dt * dt + q_i * preint.delta_p;
+
+    
     // 预测公式: Vj = Vi + g*Δt + Ri * ΔVij
     let v_predict = v_i + g_w * dt + q_i * preint.delta_v;
     // 预测公式: Rj = Ri * ΔRij

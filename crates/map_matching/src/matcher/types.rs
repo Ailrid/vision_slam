@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-14 09:44:27
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-16 16:06:40
+ * @LastEditTime: 2026-01-19 12:07:44
  * @FilePath: /map_matching/src/matcher/types.rs
  * @Description:设定和服务器发送和响应的类型
  *
@@ -62,8 +62,10 @@ pub struct SearchResponse {
 
 #[derive(Serialize, Deserialize)]
 pub struct CropRequest {
+    pub pixel_x: usize,
+    pub pixel_y: usize,
     pub patch_size: usize,
-    pub payload: SearchItem,
+    pub src: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -78,6 +80,14 @@ pub struct MatcherCfg {
     // 向量查询服务器地址
     pub client_addr: String,
 }
-
-
-
+impl Default for MatcherCfg {
+    fn default() -> Self {
+        Self {
+            backend_type: "onnx".to_string(),
+            model_path: "".to_string(),
+            threads: 4,
+            device: "CPU".to_string(),
+            client_addr: "http://127.0.0.1:8000".to_string(),
+        }
+    }
+}

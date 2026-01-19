@@ -9,15 +9,17 @@ nalgebra.workspace=true
 serde.workspace = true
 thiserror.workspace = true
 opencv.workspace = true
+anyhow.workspace = true
 rayon.workspace = true
 rand.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
 
 
-ort = "2.0.0-rc.11"
+ort = {version="2.0.0-rc.11",features=["cuda"]}
 ndarray = "0.17.2"
 openvino = {version="0.9.1",features = ["runtime-linking"]}
 serde_json = "1.0.149"
 reqwest = { version = "0.13.1", features = ["json","blocking"] }
 geodesy = "0.14.0"
+csv = "1.4.0"

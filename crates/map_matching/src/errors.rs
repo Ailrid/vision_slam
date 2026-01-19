@@ -42,4 +42,6 @@ pub enum LocationError {
     MatcherError(#[from] MatcherError),
     #[error("Minimal error: {0}")]
     MinimalError(#[from] geodesy::Error),
+    #[error("Cannot find any position")]
+    FindPositionError,
 }

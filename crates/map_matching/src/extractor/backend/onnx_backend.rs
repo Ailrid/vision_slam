@@ -15,6 +15,11 @@ pub struct OnnxBackend {
 
 impl ExtractorBackend for OnnxBackend {
     type Output = FeatureData;
+    #[tracing::instrument(
+        level = "info",
+        skip(self, drone_img, sat_img),
+        fields(backend = "onnx")
+    )]
     fn forward(&mut self, drone_img: &Mat, sat_img: &Mat) -> Result<Self::Output, BackendError> {
         //要转换一下格式
         // 准备输入数据
@@ -50,6 +55,7 @@ impl ExtractorBackend for OnnxBackend {
 }
 
 impl OnnxBackend {
+    #[tracing::instrument(level = "info")]
     pub fn new(
         level: GraphOptimizationLevel,
         intra_threads: usize,

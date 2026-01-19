@@ -10,7 +10,12 @@ pub struct OpenVinoBackend {
 }
 
 impl MatcherBackend for OpenVinoBackend {
-    #[tracing::instrument(level = "debug", skip(self, drone_img))]
+    #[tracing::instrument(
+        level = "info",
+        skip(self, drone_img),
+        fields(backend = "vino")
+        err
+    )]
     fn forword(&mut self, drone_img: &Mat) -> Result<Vec<f32>, BackendError> {
         // 准备输入数据
         let mut input_buffer: Vec<f32> = Vec::new();
@@ -43,6 +48,7 @@ impl MatcherBackend for OpenVinoBackend {
 }
 
 impl OpenVinoBackend {
+    #[tracing::instrument(level = "info")]
     pub fn new(
         xml_path: &str,
         bin_path: &str,
