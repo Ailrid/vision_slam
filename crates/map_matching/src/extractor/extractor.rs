@@ -2,8 +2,8 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:40:49
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-19 11:57:42
- * @FilePath: /map_matching/src/extractor/extractor.rs
+ * @LastEditTime: 2026-02-14 12:38:29
+ * @FilePath: /monocular-inertial-map-localization/crates/map_matching/src/extractor/extractor.rs
  * @Description:特征提取和计算单应性模块
  *
  * Copyright (c) 2026 by ShirahaYuki, All Rights Reserved.
@@ -14,7 +14,7 @@ use crate::extractor::errors::ExtractorError;
 use crate::extractor::traits::ExtractorBackend;
 use crate::extractor::types::*;
 use opencv::calib3d;
-use opencv::core::{Mat, MatTraitConst, Point2f, Vector, count_non_zero, perspective_transform};
+use opencv::core::{count_non_zero, perspective_transform, Mat, MatTraitConst, Point2f, Vector};
 
 use tracing::info;
 pub struct Extractor {
@@ -55,6 +55,17 @@ impl Extractor {
             check_det: cfg.check_det,
         })
     }
+    /// 计算无人机图像和卫星图像的单应性矩阵
+    ///
+    /// # Arguments
+    ///
+    /// - `drone_img` (`&Mat`) - 卫星图像.
+    /// - `sat_img` (`&Mat`) - 无人机图像.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<(Mat, usize, Point2f), ExtractorError>` -单应性矩阵、内点数、无人机中心点.
+    ///
 
     #[tracing::instrument(
         level = "info",

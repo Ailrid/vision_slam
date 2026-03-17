@@ -1,17 +1,15 @@
 use map_matching::estimator::Estimator;
 use map_matching::extractor::types::ExtractorCfg;
-use map_matching::location::Location; // 根据你的实际路径调整
+use map_matching::location::Location; 
 use map_matching::matcher::types::MatcherCfg;
 use map_matching::types::FramePriori;
 use opencv::core::MatTraitConst;
-// 确保路径正确
 use opencv::imgcodecs::{IMREAD_COLOR, imread};
 use serde::Serialize;
 use std::fs::{self, File};
 use std::io::Write;
 use std::time::Instant;
 
-// 用于保存到 JSON 的结构
 #[derive(Serialize)]
 struct FinalResult {
     frame_id: usize,
@@ -46,7 +44,7 @@ pub fn run_location_batch_test(
 
     let mut results = Vec::new();
 
-    let mut estimator = Estimator::new(10);
+    let mut estimator = Estimator::new(5.0,5.0);
     // 3. 循环处理
     for entry in entries {
         let path = entry.path();
@@ -74,7 +72,7 @@ pub fn run_location_batch_test(
         match locator.frame_location(&img, start_time, frame_id, priori) {
             Ok(predict_points) => {
                 estimator.update(predict_points, None);
-                if let Some(estimated_point) = estimator.get_current_pose() {
+                if let Some(estimated_point) = estimator.estimate() {
 
                     results.push(FinalResult {
                         frame_id,

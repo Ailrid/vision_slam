@@ -2,8 +2,8 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:21:00
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-19 12:19:09
- * @FilePath: /map_matching/src/location.rs
+ * @LastEditTime: 2026-03-04 09:21:18
+ * @FilePath: /monocular-inertial-map-localization/crates/map_matching/src/location.rs
  * @Description:地图定位模块，负责给出地图定位结果
  *
  * Copyright (c) 2026 by ShirahaYuki, All Rights Reserved.
@@ -41,6 +41,19 @@ impl Location {
             minimal,
         })
     }
+    /// 给一帧图像进行定位
+    ///
+    /// # Arguments
+    ///
+    /// - `drone_img` (`&Mat`) - 无人机图像.
+    /// - `time` (`Instant`) - 时间戳.
+    /// - `frame_id` (`usize`) - 帧编号.
+    /// - `frame_priori` (`FramePriori`) -搜索先验.
+    ///
+    /// # Returns
+    ///
+    /// - `Result<Vec<PredictPoint>, LocationError>` - 可能的位置的Vec.
+    ///
     #[tracing::instrument(
         level = "info",
         skip(self, drone_img, frame_priori),

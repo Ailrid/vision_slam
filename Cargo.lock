@@ -865,10 +865,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
-name = "feature"
-version = "0.1.0"
-
-[[package]]
 name = "find-msvc-tools"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1668,6 +1664,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "monocular-inertial-map-localization"
+version = "0.1.0"
+dependencies = [
+ "imu",
+ "map_matching",
+ "optimizer",
+ "vio",
+]
+
+[[package]]
 name = "nalgebra"
 version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1958,6 +1964,10 @@ dependencies = [
  "libloading",
  "openvino-finder",
 ]
+
+[[package]]
+name = "optimizer"
+version = "0.1.0"
 
 [[package]]
 name = "option-ext"
@@ -3012,10 +3022,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tracker"
-version = "0.1.0"
-
-[[package]]
 name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3159,13 +3165,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
-name = "vision_slam"
+name = "vio"
 version = "0.1.0"
 dependencies = [
- "feature",
- "imu",
- "map_matching",
- "tracker",
+ "nalgebra",
+ "opencv",
+ "thiserror 2.0.17",
 ]
 
 [[package]]

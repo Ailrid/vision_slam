@@ -2,7 +2,7 @@
  * @Author: ShirahaYuki  shirhayuki2002@gmail.com
  * @Date: 2026-01-15 13:12:59
  * @LastEditors: ShirahaYuki  shirhayuki2002@gmail.com
- * @LastEditTime: 2026-01-19 18:17:20
+ * @LastEditTime: 2026-03-04 09:45:53
  * @FilePath: /map_matching/src/estimator.rs
  * @Description:位置评估算法，负责初始化定位和评估位置可靠性
  *
@@ -125,7 +125,7 @@ impl Trajectory {
             [.., p_curr] if self.points.len() > self.pre_length => {
                 self.pre_length = self.points.len();
 
-                // 修正位置：地图匹配永远是老大，用它给的 ENU 坐标覆盖预测值
+                // 用地图匹配给的 ENU 坐标覆盖预测值
                 self.last_pos = p_curr.pos;
 
                 // 状态维护
@@ -185,9 +185,9 @@ impl Trajectory {
             }
         }
         let quality_factor = 20.0 / (new_point.inlier_count as f32).max(1.0);
-        spatial_dist * quality_factor * self.uncertainty
+        spatial_dist * quality_factor / self.uncertainty
     }
-    
+
     /// 该轨迹现在给出的坐标，能不能信？
     pub fn is_reliable(&self) -> bool {
         // 宁缺毋滥原则：
@@ -209,9 +209,7 @@ impl Trajectory {
 
 pub struct Estimator {
     //路径缓冲区
-    pub buffer_trajectory: Vec<Trajectory>,
-    // 最大路径总数
-    pub max_trajectory_length: usize,
+    buffer_trajectory: Vec<Trajectory>,
     // 合并阈值
     pub merge_threshold: f32,
     // 匹配阈值
@@ -219,12 +217,11 @@ pub struct Estimator {
 }
 
 impl Estimator {
-    pub fn new(max_trajectory_length: usize) -> Self {
+    pub fn new(merge_threshold: f32, match_threshold: f32) -> Self {
         Self {
             buffer_trajectory: Vec::new(),
-            max_trajectory_length,
-            merge_threshold: 5.0,
-            match_threshold: 5.0,
+            merge_threshold: merge_threshold,
+            match_threshold: match_threshold,
         }
     }
 
@@ -301,6 +298,7 @@ impl Estimator {
         merged_results
     }
 
+    ///更新轨迹，传入新的点对比历史轨迹给出预测
     pub fn update(&mut self, new_points: Vec<PredictPoint>, displacement: Option<Vector3<f32>>) {
         if let Some(params) = &displacement {
             for traj in &mut self.buffer_trajectory {
@@ -360,7 +358,8 @@ impl Estimator {
         self.buffer_trajectory.retain(|t| t.health > 0.0);
     }
 
-    pub fn get_current_pose(&self) -> Option<(f64, f64, f64)> {
+    /// 获得当前最可能的位置
+    pub fn estimate(&self) -> Option<(f64, f64, f64)> {
         // 提取所有可靠轨迹并按内点数排序
         let mut reliable_trajs: Vec<_> = self
             .buffer_trajectory

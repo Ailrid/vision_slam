@@ -1,5 +1,5 @@
 [package]
-name = "vision_slam"
+name = "monocular-inertial-map-localization"
 version = "0.1.0"
 edition = "2024"
 
@@ -27,7 +27,7 @@ tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 
 
 [dependencies]
-tracker = { path = "crates/tracker" }
+vio = { path = "crates/vio" }
 imu = { path = "crates/imu" }
-feature = { path = "crates/feature" }
 map_matching = { path = "crates/map_matching" }
+optimizer = { path = "crates/optimizer" }
